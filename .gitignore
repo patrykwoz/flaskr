@@ -1,0 +1,5 @@
+/dist
+/.pytest_cache
+/flaskr/__pycache__
+/htmlcov
+/venv
