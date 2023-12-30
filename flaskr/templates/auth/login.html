@@ -1,15 +1,24 @@
 {% extends 'base.html' %}
 
-{% block header %}
-  <h1>{% block title %}Log In{% endblock %}</h1>
-{% endblock %}
-
 {% block content %}
-  <form method="post">
-    <label for="username">Username</label>
-    <input name="username" id="username" required>
-    <label for="password">Password</label>
-    <input type="password" name="password" id="password" required>
-    <input type="submit" value="Log In">
-  </form>
+
+  <div class="row justify-content-md-center">
+    <div class="col-md-12 col-lg-12">
+      <h2 class="join-message">Welcome back.</h2>
+
+      <form method="POST" id="user_form">
+        {{ form.hidden_tag() }}
+
+        {% for field in form if field.widget.input_type != 'hidden' %}
+          {% for error in field.errors %}
+            <span class="text-danger">{{ error }}</span>
+          {% endfor %}
+          {{ field(placeholder=field.label.text, class="form-control") }}
+        {% endfor %}
+
+        <button class="btn btn-primary btn-block btn-lg">Log in</button>
+      </form>
+    </div>
+  </div>
+
 {% endblock %}

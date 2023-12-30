@@ -5,12 +5,20 @@ def create_app(test_config=None):
     # Create and configure the app
     app = Flask(__name__, instance_relative_config=True)
 
+    # Fetch the DATABASE_URL from the environment variable
+    DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql:///flaskr')
+
+    # Check if the URL needs to be modified for SQLAlchemy compatibility
+    if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
+        DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
     # Set SECRET_KEY and DATABASE URL from environment variables with fallback values
     app.config.from_mapping(
         SECRET_KEY=os.environ.get('SECRET_KEY', 'default-secret-key'),
-        SQLALCHEMY_DATABASE_URI=os.environ.get('DATABASE_URL', 'sqlite:///' + os.path.join(app.instance_path, 'flaskr.sqlite')),
+        SQLALCHEMY_DATABASE_URI=DATABASE_URL
     )
 
+    
     if test_config is None:
         # Load the instance config, if it exists, when not testing
         app.config.from_pyfile('config.py', silent=True)
@@ -29,7 +37,7 @@ def create_app(test_config=None):
     def hello():
         return 'Hello, World!'
 
-    from . import db
+    from .models import db
     db.init_app(app)
 
     from . import auth
