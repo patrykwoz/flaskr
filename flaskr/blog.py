@@ -4,58 +4,49 @@ from flask import (
 from werkzeug.exceptions import abort
 
 from flaskr.auth import login_required
-from flaskr.db import get_db
+from flaskr.models import db, Post
+from flaskr.forms import PostAddForm
 
 bp = Blueprint('blog', __name__)
 
 @bp.route('/')
 def index():
-    db = get_db()
-    posts = db.execute(
-        'SELECT p.id, title, body, created, author_id, username'
-        ' FROM post p JOIN user u ON p.author_id = u.id'
-        ' ORDER BY created DESC'
-    ).fetchall()
+    posts = Post.query.all()
     return render_template('blog/index.html', posts=posts)
 
 
 @bp.route('/create', methods=('GET', 'POST'))
 @login_required
 def create():
-    if request.method == 'POST':
-        title = request.form['title']
-        body = request.form['body']
-        error = None
+    """Handle post creation. """
+    form = PostAddForm()
 
-        if not title:
-            error = 'Title is required.'
-
-        if error is not None:
-            flash(error)
-        else:
-            db = get_db()
-            db.execute(
-                'INSERT INTO post (title, body, author_id)'
-                ' VALUES (?, ?, ?)',
-                (title, body, g.user['id'])
+    if form.validate_on_submit():
+        try:
+            post = Post(
+                title=form.title.data,
+                body=form.body.data,
             )
-            db.commit()
-            return redirect(url_for('blog.index'))
+            db.session.add(post)
+            db.session.commit()
+        except(e):
+            db.session.rollback()
+            flash(f"Something went wrong, here's your error: {e}", 'danger')
+            return render_template('blog/create.html', form=form)  # or any other appropriate response
+        
+        flash("Post successfully created.", 'success')
 
-    return render_template('blog/create.html')
+        return redirect(url_for('blog.index'))
+    else:
+        return render_template('blog/create.html', form=form)
 
 def get_post(id, check_author=True):
-    post = get_db().execute(
-        'SELECT p.id, title, body, created, author_id, username'
-        ' FROM post p JOIN user u ON p.author_id = u.id'
-        ' WHERE p.id = ?',
-        (id,)
-    ).fetchone()
+    post = Post.query.get_or_404(id)
 
     if post is None:
         abort(404, f"Post id {id} doesn't exist.")
 
-    if check_author and post['author_id'] != g.user['id']:
+    if check_author and post.author_id != g.user.id:
         abort(403)
 
     return post
@@ -63,37 +54,32 @@ def get_post(id, check_author=True):
 @bp.route('/<int:id>/update', methods=('GET', 'POST'))
 @login_required
 def update(id):
-    post = get_post(id)
+    post = Post.query.get_or_404(id)
+    form = PostAddForm()
 
-    if request.method == 'POST':
-        title = request.form['title']
-        body = request.form['body']
-        error = None
+    if form.validate_on_submit():
+        try:
+            post.title=form.title.data,
+            post.body=form.body.data,
+            
+            db.session.commit()
+        except(e):
+            db.session.rollback()
+            flash(f"Something went wrong, here's your error: {e}", 'danger')
+            return render_template('blog/create.html', form=form)  # or any other appropriate response
+        
+        flash("Post successfully updated.", 'success')
 
-        if not title:
-            error = 'Title is required.'
-
-        if error is not None:
-            flash(error)
-        else:
-            db = get_db()
-            db.execute(
-                'UPDATE post SET title = ?, body = ?'
-                ' WHERE id = ?',
-                (title, body, id)
-            )
-            db.commit()
-            return redirect(url_for('blog.index'))
-
-    return render_template('blog/update.html', post=post)
+        return redirect("/blog.index")
+    else:
+        return render_template('blog/update.html', form=form)
 
 
 @bp.route('/<int:id>/delete', methods=('POST',))
 @login_required
 def delete(id):
-    get_post(id)
-    db = get_db()
-    db.execute('DELETE FROM post WHERE id = ?', (id,))
+    post = Post.query.get_or_404(id)
+    db.session.delete(post)
     db.commit()
     return redirect(url_for('blog.index'))
 
