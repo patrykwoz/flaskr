@@ -10,7 +10,7 @@ Flask==3.0.0
 Flask-Bcrypt==1.0.1
 Flask-SQLAlchemy==3.1.1
 Flask-WTF==1.2.1
--e git+https://github.com/patrykwoz/flaskr.git@dbcfd44860f6cbefe56f122df786b148c8a5808a#egg=flaskr
+-e git+https://github.com/patrykwoz/flaskr.git@b564793dc459dd6802b87ac93e47a50218430e0f#egg=flaskr
 greenlet==3.0.3
 gunicorn==21.2.0
 idna==3.6
