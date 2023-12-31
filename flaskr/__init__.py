@@ -26,11 +26,6 @@ def create_app(test_config=None):
         # Load the test config if passed in
         app.config.from_mapping(test_config)
 
-    # Ensure the instance folder exists for local SQLite database (not used in production)
-    try:
-        os.makedirs(app.instance_path)
-    except OSError:
-        pass
 
     # A simple page that says hello
     @app.route('/hello')
