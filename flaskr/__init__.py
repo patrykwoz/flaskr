@@ -19,9 +19,9 @@ def create_app(test_config=None) -> Flask:
         SECRET_KEY=os.environ.get('SECRET_KEY', 'devnotcompletelyrandomsecretkey'),
         SQLALCHEMY_DATABASE_URI=DATABASE_URL,
         CELERY=dict(
-            BROKER_URL=os.environ.get('REDISCLOUD_URL', 'redis://localhost'),
-            CELERY_RESULT_BACKEND=os.environ.get('REDISCLOUD_URL', 'redis://localhost'),
-            TASK_IGNORE_RESULT=True,
+            broker_url=os.environ.get('REDISCLOUD_URL', 'redis://localhost'),
+            result_backend=os.environ.get('REDISCLOUD_URL', 'redis://localhost'),
+            task_ignore_result=True,
         ),
     )
     app.config.from_prefixed_env()
