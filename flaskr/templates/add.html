@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Addition{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+<form action="/add" method="post">
+    <label for="a">Number A:</label>
+    <input type="number" name="a" id="a">
+    <label for="b">Number B:</label>
+    <input type="number" name="b" id="b">
+    
+    <button>add</button>
+</form>
+{% endblock %}
