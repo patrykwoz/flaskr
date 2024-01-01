@@ -19,9 +19,12 @@ def create_app(test_config=None) -> Flask:
         SECRET_KEY=os.environ.get('SECRET_KEY', 'devnotcompletelyrandomsecretkey'),
         SQLALCHEMY_DATABASE_URI=DATABASE_URL,
         CELERY=dict(
-            broker_url=os.environ.get('REDISCLOUD_URL', 'redis://localhost'),
-            result_backend=os.environ.get('REDISCLOUD_URL', 'redis://localhost'),
+            broker_url=os.environ.get('REDIS_URL', 'redis://localhost'),
+            result_backend=os.environ.get('REDIS_URL', 'redis://localhost'),
             task_ignore_result=True,
+            task_serializer='json',
+            result_serializer='json',
+            accept_content=['json'],
         ),
     )
     app.config.from_prefixed_env()
