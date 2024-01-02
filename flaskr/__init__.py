@@ -3,7 +3,7 @@ from flask import Flask, render_template, jsonify
 from celery_app import celery_init_app
 from tasks import add_together
 import urllib.parse as urlparse
-
+import redis
 
 def create_app(test_config=None) -> Flask:
     # Create and configure the app
