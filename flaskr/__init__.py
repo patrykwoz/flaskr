@@ -64,7 +64,7 @@ def create_app(test_config=None) -> Flask:
         return {"result_id": result.id}
     
     @app.get("/add-redis")
-    def render_add():
+    def render_add_redis():
         
         return render_template('add-redis.html')
     
