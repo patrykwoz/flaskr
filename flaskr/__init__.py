@@ -2,7 +2,7 @@ import os
 from flask import Flask, render_template, jsonify
 from celery_app import celery_init_app
 from tasks import add_together
-import urlparse
+from urllib.parse import urlparse
 
 
 def create_app(test_config=None) -> Flask:
