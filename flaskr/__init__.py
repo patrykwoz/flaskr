@@ -63,6 +63,11 @@ def create_app(test_config=None) -> Flask:
         result = add_together.delay(a, b)
         return {"result_id": result.id}
     
+    @app.get("/add-redis")
+    def render_add():
+        
+        return render_template('add-redis.html')
+    
     @app.post("/add-redis")
     def start_add_redis() -> dict[str, object]:
         a = request.form.get("a", type=int)
