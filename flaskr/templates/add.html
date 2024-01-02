@@ -5,7 +5,7 @@
 {% endblock %}
 
 {% block content %}
-<form action="/add" method="post">
+<form action="{{ url_for('tasks.add')}}" method="post">
     <label for="a">Number A:</label>
     <input type="number" name="a" id="a">
     <label for="b">Number B:</label>

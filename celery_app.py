@@ -9,6 +9,7 @@ def celery_init_app(app: Flask) -> Celery:
 
     celery_app = Celery(app.name, task_cls=FlaskTask)
     celery_app.config_from_object(app.config["CELERY"])
+    celery_app.conf.result_expires = 3600
     celery_app.set_default()
     app.extensions["celery"] = celery_app
     return celery_app
