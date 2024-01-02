@@ -2,6 +2,7 @@ import os
 from flask import Flask, render_template, jsonify
 from celery_app import celery_init_app
 from tasks import add_together
+import urlparse
 
 
 def create_app(test_config=None) -> Flask:
@@ -14,6 +15,9 @@ def create_app(test_config=None) -> Flask:
     # Check if the URL needs to be modified for SQLAlchemy compatibility
     if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
         DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+    
+    url = urlparse.urlparse(os.environ.get('REDISCLOUD_URL'))
+    r = redis.Redis(host=url.hostname, port=url.port, password=url.password)
 
     # Set SECRET_KEY and DATABASE URL from environment variables with fallback values
     app.config.from_mapping(
