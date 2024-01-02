@@ -2,6 +2,8 @@ import os
 from flask import Flask, render_template, jsonify
 from celery_app import celery_init_app
 from tasks import add_together
+from urllib.parse import urlparse
+import redis
 
 def create_app(test_config=None) -> Flask:
     # Create and configure the app
@@ -25,11 +27,15 @@ def create_app(test_config=None) -> Flask:
             task_serializer='json',
             result_serializer='json',
             accept_content=['json'],
-            broker_use_ssl={'ssl_cert_reqs': 'CERT_NONE'}
         ),
     )
     app.config.from_prefixed_env()
     celery_app = celery_init_app(app)
+
+    # Add Redis connection setup using REDIS_URL
+    url = urlparse(os.environ.get("REDIS_URL"))
+    r = redis.Redis(host=url.hostname, port=url.port, password=url.password, ssl=True, ssl_cert_reqs=None)
+    app.config['REDIS_CONNECTION'] = r
     
     if test_config is None:
         # Load the instance config, if it exists, when not testing
