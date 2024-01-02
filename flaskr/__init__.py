@@ -25,7 +25,7 @@ def create_app(test_config=None) -> Flask:
             task_serializer='json',
             result_serializer='json',
             accept_content=['json'],
-            broker_use_ssl={'ssl_cert_reqs': CERT_NONE}
+            broker_use_ssl={'ssl_cert_reqs': 'CERT_NONE'}
         ),
     )
     app.config.from_prefixed_env()
