@@ -2,8 +2,7 @@ import os
 from flask import Flask, render_template, jsonify
 from celery_app import celery_init_app
 from tasks import add_together
-from urllib.parse import urlparse
-import redis
+
 
 def create_app(test_config=None) -> Flask:
     # Create and configure the app
@@ -21,8 +20,8 @@ def create_app(test_config=None) -> Flask:
         SECRET_KEY=os.environ.get('SECRET_KEY', 'devnotcompletelyrandomsecretkey'),
         SQLALCHEMY_DATABASE_URI=DATABASE_URL,
         CELERY=dict(
-            broker_url=os.environ.get('REDIS_URL', 'redis://localhost'),
-            result_backend=os.environ.get('REDIS_URL', 'redis://localhost'),
+            broker_url=os.environ.get('REDISCLOUD_URL', 'redis://localhost'),
+            result_backend=os.environ.get('REDISCLOUD_URL', 'redis://localhost'),
             task_ignore_result=True,
             task_serializer='json',
             result_serializer='json',
@@ -30,12 +29,7 @@ def create_app(test_config=None) -> Flask:
         ),
     )
     app.config.from_prefixed_env()
-    celery_app = celery_init_app(app)
 
-    # Add Redis connection setup using REDIS_URL
-    url = urlparse(os.environ.get("REDIS_URL"))
-    r = redis.Redis(host=url.hostname, port=url.port, password=url.password, ssl=True, ssl_cert_reqs=None)
-    app.config['REDIS_CONNECTION'] = r
     
     if test_config is None:
         # Load the instance config, if it exists, when not testing
@@ -44,6 +38,7 @@ def create_app(test_config=None) -> Flask:
         # Load the test config if passed in
         app.config.from_mapping(test_config)
 
+    celery_app = celery_init_app(app)
 
     # A simple page that says hello
     @app.route('/hello')
