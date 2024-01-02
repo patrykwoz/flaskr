@@ -43,3 +43,9 @@ class PostAddForm(FlaskForm):
     title = StringField('Post Title', validators=[DataRequired()])
     body = TextAreaField('Post Body', validators=[DataRequired(), Length(min=3)])
 
+
+class KnowledgeBaseAddForm(FlaskForm):
+    """Form for adding knowledge bases."""
+
+    title = TextAreaField('Title', validators=[DataRequired()])
+

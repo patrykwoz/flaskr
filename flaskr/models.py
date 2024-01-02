@@ -75,8 +75,22 @@ class Post(db.Model):
 
 
     def __repr__(self):
-        return f"<Idea #{self.id}: {self.name}>"
+        return f"<Post #{self.id}: {self.name}>"
 
     @classmethod
     def sorted_query(cls):
         return cls.query.order_by(cls.name).all()
+
+class KnowledgeBase(db.Model):
+    """User's knowledge base model."""
+
+    __tablename__ = 'knowledge_bases'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    author_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete="CASCADE"))
+    created = db.Column(db.DateTime, nullable=False, default = datetime.utcnow)
+    title = db.Column(db.Text, nullable=False)
+    json_object = db.Column(db.JSON)
+
+    def __repr__(self):
+        return f"<Knowledge Base #{self.id}: {self.name}>"
