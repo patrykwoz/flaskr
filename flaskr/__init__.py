@@ -62,6 +62,18 @@ def create_app(test_config=None) -> Flask:
         b = request.form.get("b", type=int)
         result = add_together.delay(a, b)
         return {"result_id": result.id}
+    
+    @app.post("/add-redis")
+    def start_add_redis() -> dict[str, object]:
+        a = request.form.get("a", type=int)
+        b = request.form.get("b", type=int)
+        result = add_together.delay(a, b)
+        
+        # Store the result in Redis with a unique key
+        result_key = f"result:{result.id}"
+        app.config['REDIS_CONNECTION'].set(result_key, result.result)
+        
+        return {"result_id": result.id}
 
     from celery.result import AsyncResult
 
@@ -73,6 +85,31 @@ def create_app(test_config=None) -> Flask:
             "successful": result.successful(),
             "value": result.result if result.ready() else None,
         }
+        return jsonify(response)
+    
+    @app.get("/result-redis/<id>")
+    def task_result_redis(id: str):
+        result_key = f"result:{id}"  # Construct the result_key based on the 'id' parameter
+        redis_connection = app.config.get('REDIS_CONNECTION')
+        
+        if redis_connection is None:
+            return jsonify({"error": "Redis connection not available"}), 500
+        
+        result = redis_connection.get(result_key)
+        
+        if result is not None:
+            response = {
+                "ready": True,  # You may need to determine readiness based on your application logic
+                "successful": True,  # You may need to determine success based on your application logic
+                "value": result.decode()  # Assuming the result is a bytes-like object, convert it to a string
+            }
+        else:
+            response = {
+                "ready": False,
+                "successful": False,
+                "value": None
+            }
+        
         return jsonify(response)
 
     from .models import db
