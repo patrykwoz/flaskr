@@ -4,3 +4,8 @@
 /htmlcov
 /venv
 /tests
+/__pycache__
+__pycache__
+/helpers/__pycache__
+/helpers/ml_functions/__pycache__
+dump.rdb
