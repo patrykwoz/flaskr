@@ -30,6 +30,7 @@ def create_kb(kb_id: int):
 
         if knowledge_base:
             kb = from_text_to_kb(text=knowledge_base.title, article_url='http://valid-url.com', verbose=False, model=model, tokenizer=tokenizer)
+            
             knowledge_base.json_object = kb.to_json()
 
             db.session.commit()
@@ -257,11 +258,20 @@ def from_text_to_kb(text, article_url,tokenizer, model, span_length=128, article
         "num_beams": 3,
         "num_return_sequences": num_return_sequences
     }
-    generated_tokens = model.generate(**inputs,**gen_kwargs,)
+
+    
+    print('before generated tokens')
+    try:
+        generated_tokens = model.generate(**inputs,**gen_kwargs,)
+    except Exception as e:
+        print (f"error {e}" )
+    rdb.set_trace()
+    print('after generated tokens')
 
     # decode relations
     decoded_preds = tokenizer.batch_decode(generated_tokens,
                                            skip_special_tokens=False)
+    print('after decoded pred')
 
     # create kb
     kb = KB()
