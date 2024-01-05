@@ -1,60 +1,10 @@
-import time
-
-from celery import shared_task, Task
-
-from celery.contrib import rdb
-
-from flaskr.models import db, KnowledgeBase
-# from flaskr.helpers.ml_functions import class_kb
-
-from flaskr.helpers.ml_functions import resource_cache
-
 import math
 import torch
+import wikipedia
 import json
-
-tokenizer = resource_cache.tokenizer
-model = resource_cache.model
-
-
-
-@shared_task(ignore_result=False)
-def add(a: int, b: int) -> int:
-    time.sleep(5)
-    return a + b
-
-@shared_task(ignore_result=False, time_limit=180)
-def create_kb(kb_id: int):
-    try:
-        knowledge_base = db.session.query(KnowledgeBase).get(kb_id)
-
-        if knowledge_base:
-            kb = from_text_to_kb(text=knowledge_base.title, article_url='http://valid-url.com', verbose=False, model=model, tokenizer=tokenizer)
-            knowledge_base.json_object = kb.to_json()
-
-            db.session.commit()
-
-            return kb_id
-        else:
-            raise ValueError('Could not find the knowledge_base')
-
-    except Exception as e:
-        db.session.rollback()  # Rollback the transaction in case of an error
-        return str(e) 
-
-@shared_task()
-def block() -> None:
-    time.sleep(5)
-
-
-@shared_task(bind=True, ignore_result=False)
-def process(self: Task, total: int) -> object:
-    for i in range(total):
-        self.update_state(state="PROGRESS", meta={"current": i + 1, "total": total})
-        time.sleep(1)
-
-    return {"current": total, "total": total}
-
+import pdb
+import time
+from memory_profiler import memory_usage
 
 def extract_relations_from_model_output(text):
     relations = []
@@ -145,7 +95,17 @@ class KB():
         # check on wikipedia
         candidate_entities = [r["head"], r["tail"]]
 
+        start_time = time.time()
+        memory_before = memory_usage()[0]
+
         entities = [self.get_wikipedia_data(ent) for ent in candidate_entities]
+
+        end_time = time.time()
+        memory_after = memory_usage()[0]
+        print(f"Execution time: {end_time - start_time} seconds")
+        print(f"Memory used: {memory_after - memory_before} MiB")
+
+
 
         # if one entity does not exist, stop
         if any(ent is None for ent in entities):
@@ -214,41 +174,27 @@ def from_text_to_kb(text, article_url,tokenizer, model, span_length=128, article
     num_spans = math.ceil(num_tokens / span_length)
     if verbose:
         print(f"Input has {num_spans} spans")
-    overlap = math.ceil((num_spans * span_length - num_tokens) / max(num_spans - 1, 1))
+    overlap = math.ceil((num_spans * span_length - num_tokens) / 
+                        max(num_spans - 1, 1))
     spans_boundaries = []
     start = 0
     for i in range(num_spans):
-        spans_boundaries.append([start + span_length * i, start + span_length * (i + 1)])
+        spans_boundaries.append([start + span_length * i,
+                                 start + span_length * (i + 1)])
         start -= overlap
     if verbose:
         print(f"Span boundaries are {spans_boundaries}")
 
     # transform input with spans
-    # tensor_ids = [inputs["input_ids"][0][boundary[0]:boundary[1]] for boundary in spans_boundaries]
-    # Initialize an empty list to store tensor_ids
-    tensor_ids = []
-
-    # Iterate through spans_boundaries and extract slices from inputs["input_ids"]
-    for boundary in spans_boundaries:
-        start_idx, end_idx = boundary[0], boundary[1]
-        input_ids_slice = inputs["input_ids"][0][start_idx:end_idx]
-        tensor_ids.append(input_ids_slice)
-
-    # tensor_masks = [inputs["attention_mask"][0][boundary[0]:boundary[1]] for boundary in spans_boundaries]
-    # Initialize an empty list to store tensor_masks
-    tensor_masks = []
-
-    # Iterate through spans_boundaries and extract slices from inputs["attention_mask"]
-    for boundary in spans_boundaries:
-        start_idx, end_idx = boundary[0], boundary[1]
-        attention_mask_slice = inputs["attention_mask"][0][start_idx:end_idx]
-        tensor_masks.append(attention_mask_slice)
-
-
+    tensor_ids = [inputs["input_ids"][0][boundary[0]:boundary[1]]
+                  for boundary in spans_boundaries]
+    tensor_masks = [inputs["attention_mask"][0][boundary[0]:boundary[1]]
+                    for boundary in spans_boundaries]
     inputs = {
         "input_ids": torch.stack(tensor_ids),
         "attention_mask": torch.stack(tensor_masks)
     }
+
     # generate relations
     num_return_sequences = 3
     gen_kwargs = {
@@ -257,11 +203,26 @@ def from_text_to_kb(text, article_url,tokenizer, model, span_length=128, article
         "num_beams": 3,
         "num_return_sequences": num_return_sequences
     }
-    generated_tokens = model.generate(**inputs,**gen_kwargs,)
+    start_time = time.time()
+    memory_before = memory_usage()[0]
+    generated_tokens = model.generate(
+        **inputs,
+        **gen_kwargs,
+    )
+    end_time = time.time()
+    memory_after = memory_usage()[0]
+    print(f"Execution time: {end_time - start_time} seconds")
+    print(f"Memory used: {memory_after - memory_before} MiB")
 
     # decode relations
+    start_time = time.time()
+    memory_before = memory_usage()[0]
     decoded_preds = tokenizer.batch_decode(generated_tokens,
                                            skip_special_tokens=False)
+    end_time = time.time()
+    memory_after = memory_usage()[0]
+    print(f"Execution time: {end_time - start_time} seconds")
+    print(f"Memory used: {memory_after - memory_before} MiB")
 
     # create kb
     kb = KB()
@@ -275,7 +236,6 @@ def from_text_to_kb(text, article_url,tokenizer, model, span_length=128, article
                     "spans": [spans_boundaries[current_span_index]]
                 }
             }
-            
             kb.add_relation(relation, article_title, article_publish_date)
         i += 1
 

@@ -1,14 +1,12 @@
 import os
-from flask import Flask, render_template, jsonify
-from celery_app import celery_init_app
-from urllib.parse import urlparse
-import redis
+from flask import Flask, render_template, jsonify, request
+from .celery_app import celery_init_app
 from celery.result import AsyncResult
-from flask import request
+import redis
+from urllib.parse import urlparse
 from .models import db
-from . import auth
-from . import blog
-from . import views
+from . import auth, blog, views
+
 
 def create_app(test_config=None) -> Flask:
     # Create and configure the app
@@ -36,21 +34,6 @@ def create_app(test_config=None) -> Flask:
     )
     app.config.from_prefixed_env()
     celery_app = celery_init_app(app)
-
-    # A simple page that says hello
-    @app.route('/hello')
-    def hello():
-        return 'Hello, World!'
-
-
-
-
-
-
-
-    
-
-
 
     db.init_app(app)
 
