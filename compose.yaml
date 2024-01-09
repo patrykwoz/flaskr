@@ -7,12 +7,74 @@
 # You can add other services your application may depend on here, such as a
 # database or a cache. For examples, see the Awesome Compose repository:
 # https://github.com/docker/awesome-compose
+version: '3.7'
 services:
   server:
     build:
       context: .
+      dockerfile: Dockerfile
+    restart: always
     ports:
       - 8000:8000
+    depends_on:
+      - db
+      - redis
+    environment:
+      - DATABASE_URL=postgresql:///flaskr
+      - REDISCLOUD_URL=redis://localhost
+      - SECRET_KEY=devnotcompletelyrandomsecretkey
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.celery
+    command: celery -A make_celery worker --loglevel=info
+    environment:
+      - DATABASE_URL=postgresql:///flaskr
+      - REDISCLOUD_URL=redis://localhost
+      - SECRET_KEY=devnotcompletelyrandomsecretkey
+      - CELERY_BROKER_URL=redis://redis
+      - CELERY_RESULT_BACKEND=redis://redis
+      - CELERY_TASK_IGNORE_RESULT=true
+  monitor:
+    build:
+      context: .
+      dockerfile: Dockerfile.celery
+    image: celery/flower
+    ports:
+      - "5001:5555"
+    command: celery -A tasks.app flower --port=5555
+    environment:
+      - DATABASE_URL=postgresql:///flaskr
+      - REDISCLOUD_URL=redis://localhost
+      - SECRET_KEY=devnotcompletelyrandomsecretkey
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - CELERY_TASK_IGNORE_RESULT=true
+    depends_on:
+      - redis
+      - worker
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"
+  db:
+    image: postgres
+    restart: always
+    user: postgres
+    environment:
+      - POSTGRES_DB=flaskr
+      - POSTGRES_PASSWORD=devnotcompletelyrandomsecretkey
+    expose:
+      - 5432
+    healthcheck:
+      test: ["CMD", "pg_isready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+volumes:
+  db-data:
+
+
 
 # The commented out section below is an example of how to define a PostgreSQL
 # database that your application can use. `depends_on` tells Docker Compose to
