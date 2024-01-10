@@ -19,14 +19,21 @@ services:
     depends_on:
       - db
       - redis
+    volumes:
+      - cache-volume:/cache/server
     environment:
       - DATABASE_URL=postgresql:///flaskr
       - REDISCLOUD_URL=redis://localhost
       - SECRET_KEY=devnotcompletelyrandomsecretkey
+      - TRANSFORMERS_CACHE=/cache/server
+      - HF_HOME=/cache/server
+
   worker:
     build:
       context: .
       dockerfile: Dockerfile.celery
+    volumes:
+      - cache-volume:/cache/worker
     environment:
       - DATABASE_URL=postgresql:///flaskr
       - REDISCLOUD_URL=redis://localhost
@@ -34,6 +41,9 @@ services:
       - CELERY_BROKER_URL=redis://redis
       - CELERY_RESULT_BACKEND=redis://redis
       - CELERY_TASK_IGNORE_RESULT=true
+      - TRANSFORMERS_CACHE=/cache/worker
+      - HF_HOME=/cache/worker
+
     depends_on:
       - redis
   monitor:
@@ -43,7 +53,9 @@ services:
     image: celery/flower
     ports:
       - "5001:5555"
-    command: celery -A tasks.app flower --port=5555
+    command: celery -A make_celery flower --port=5555
+    volumes:
+      - cache-volume:/cache/monitor
     environment:
       - DATABASE_URL=postgresql:///flaskr
       - REDISCLOUD_URL=redis://localhost
@@ -51,6 +63,9 @@ services:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
       - CELERY_TASK_IGNORE_RESULT=true
+      - TRANSFORMERS_CACHE=/cache/monitor
+      - HF_HOME=/cache/monitor
+
     depends_on:
       - redis
       - worker
@@ -74,6 +89,7 @@ services:
       retries: 5
 volumes:
   db-data:
+  cache-volume:  
 
 
 
