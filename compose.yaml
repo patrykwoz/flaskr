@@ -27,7 +27,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.celery
-    command: celery -A make_celery worker --loglevel=info
     environment:
       - DATABASE_URL=postgresql:///flaskr
       - REDISCLOUD_URL=redis://localhost
@@ -35,6 +34,8 @@ services:
       - CELERY_BROKER_URL=redis://redis
       - CELERY_RESULT_BACKEND=redis://redis
       - CELERY_TASK_IGNORE_RESULT=true
+    depends_on:
+      - redis
   monitor:
     build:
       context: .
