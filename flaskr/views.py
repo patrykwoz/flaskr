@@ -3,6 +3,8 @@ from flask import Blueprint, request, render_template, url_for
 
 from . import tasks
 
+from flaskr.models import db, KnowledgeBase
+
 
 bp = Blueprint("tasks", __name__, url_prefix="/tasks")
 
@@ -49,4 +51,24 @@ def block() -> dict[str, object]:
 @bp.post("/process")
 def process() -> dict[str, object]:
     result = tasks.process.delay(total=request.form.get("total", type=int))
+    return {"result_id": result.id}
+
+@bp.get("/kbs/add")
+def render_add_kb():
+
+    return render_template('add-kb.html')
+
+@bp.post("/kbs/add")
+def add_kb() -> dict[str, object]:
+
+    title = request.form.get("title")
+
+    new_kb = KnowledgeBase(title=title)
+    db.session.add(new_kb)
+    db.session.commit()
+    kb_id = new_kb.id
+
+
+    result = tasks.create_kb.delay(kb_id)
+
     return {"result_id": result.id}
