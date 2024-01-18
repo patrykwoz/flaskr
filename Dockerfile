@@ -10,8 +10,8 @@ FROM python:${PYTHON_VERSION}-slim as base
 # Prevents Python from writing pyc files.
 ENV PYTHONDONTWRITEBYTECODE=1
 
-ENV CELERY_BROKER_URL redis://redis:6379/0
-ENV CELERY_RESULT_BACKEND redis://redis:6379/0
+# ENV CELERY_BROKER_URL redis://redis:6379/0
+# ENV CELERY_RESULT_BACKEND redis://redis:6379/0
 
 
 
@@ -50,7 +50,7 @@ COPY . .
 
 
 # Expose the port that the application listens on.
-EXPOSE 8000
+EXPOSE 8080
 
 # Run the application.
-CMD ["gunicorn", "app:app", "--bind", "0.0.0.0:8000"]
+CMD ["gunicorn", "app:app"]

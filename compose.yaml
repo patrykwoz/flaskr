@@ -8,10 +8,10 @@ services:
     ports:
       - 8000:8000
     depends_on:
-      - db
+      # - db
       - redis
     environment:
-      - DATABASE_URL=postgresql:///flaskr
+      - DATABASE_URL=postgresql://beaver:password@host.docker.internal:5432/flaskr
       - REDISCLOUD_URL=redis://localhost
       - SECRET_KEY=devnotcompletelyrandomsecretkey
 
@@ -21,7 +21,7 @@ services:
       context: .
       dockerfile: Dockerfile.celery
     environment:
-      - DATABASE_URL=postgresql:///flaskr
+      - DATABASE_URL=postgresql://beaver:password@host.docker.internal:5432/flaskr
       - REDISCLOUD_URL=redis://localhost
       - SECRET_KEY=devnotcompletelyrandomsecretkey
       - CELERY_BROKER_URL=redis://redis
@@ -29,7 +29,7 @@ services:
       - CELERY_TASK_IGNORE_RESULT=true
     depends_on:
       - redis
-      - db
+      # - db
 
 
   redis:
@@ -37,35 +37,35 @@ services:
     ports:
       - "6379:6379"
   
-  db:
-    image: postgres
-    restart: always
-    user: postgres
-    environment:
-      - POSTGRES_DB=flaskr
-      - POSTGRES_PASSWORD=devnotcompletelyrandomsecretkey
-    expose:
-      - 5432
-    healthcheck:
-      test: ["CMD", "pg_isready"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    volumes:
-      - db-data:/var/lib/postgresql/data
+#   db:
+#     image: postgres
+#     restart: always
+#     user: postgres
+#     environment:
+#       - POSTGRES_DB=flaskr
+#       - POSTGRES_PASSWORD=devnotcompletelyrandomsecretkey
+#     expose:
+#       - 5432
+#     healthcheck:
+#       test: ["CMD", "pg_isready"]
+#       interval: 10s
+#       timeout: 5s
+#       retries: 5
+#     volumes:
+#       - db-data:/var/lib/postgresql/data
   
-  seed:
-    build: ./db
-    profiles: [seed]
-    user: postgres
-    environment:
-      - POSTGRES_DB=flaskr
-      - POSTGRES_PASSWORD=devnotcompletelyrandomsecretkey
-      - POSTGRES_HOST=db
-    restart: "no"
-    depends_on:
-      - server
+#   seed:
+#     build: ./db
+#     profiles: [seed]
+#     user: postgres
+#     environment:
+#       - POSTGRES_DB=flaskr
+#       - POSTGRES_PASSWORD=devnotcompletelyrandomsecretkey
+#       - POSTGRES_HOST=db
+#     restart: "no"
+#     depends_on:
+#       - server
 
 
-volumes:
-  db-data:
+# volumes:
+#   db-data:
