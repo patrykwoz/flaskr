@@ -1,0 +1,9 @@
+ARG PYTHON_VERSION=3.10.12
+FROM python:${PYTHON_VERSION}-slim as mlbase
+
+WORKDIR /app
+COPY requirements-ml.txt /app/
+
+RUN --mount=type=cache,target=/root/.cache/pip \
+    --mount=type=bind,source=requirements-ml.txt,target=requirements-ml.txt \
+    python -m pip install -r requirements-ml.txt
