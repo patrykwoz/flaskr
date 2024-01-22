@@ -6,12 +6,13 @@ services:
       dockerfile: Dockerfile
     restart: always
     ports:
-      - 5000:5000
+      - "5000:5000"
     depends_on:
       - redis
     environment:
       - DATABASE_URL=postgresql://beaver:password@host.docker.internal:5432/flaskr
-      - REDISCLOUD_URL=redis://localhost
+      - REDISCLOUD_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
       - SECRET_KEY=devnotcompletelyrandomsecretkey
       - TRANSFORMERS_CACHE=/cache/worker
       - HF_HOME=/cache/worker
@@ -22,10 +23,10 @@ services:
       dockerfile: Dockerfile.celery
     environment:
       - DATABASE_URL=postgresql://beaver:password@host.docker.internal:5432/flaskr
-      - REDISCLOUD_URL=redis://localhost
+      - REDISCLOUD_URL=redis://redis:6379/0
       - SECRET_KEY=devnotcompletelyrandomsecretkey
-      - CELERY_BROKER_URL=redis://redis
-      - CELERY_RESULT_BACKEND=redis://redis
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
       - CELERY_TASK_IGNORE_RESULT=true
       - TRANSFORMERS_CACHE=/cache/worker
       - HF_HOME=/cache/worker

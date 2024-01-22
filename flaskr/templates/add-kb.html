@@ -1,0 +1,15 @@
+{% extends 'base-test.html' %}
+
+{% block header %}
+  <h1>{% block title %}Addition{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+<form action="{{ url_for('tasks.add_kb')}}" method="post">
+    <label for="title">Text</label>
+    <input type="text" name="title" id="title">
+
+    
+    <button>add</button>
+</form>
+{% endblock %}
