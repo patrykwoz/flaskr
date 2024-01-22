@@ -2,22 +2,23 @@ version: '3.7'
 services:
   server:
     build:
-      context: .
+      context: ./flaskr
       dockerfile: Dockerfile
     restart: always
     ports:
-      - 8000:8000
+      - 5000:5000
     depends_on:
-      # - db
       - redis
     environment:
       - DATABASE_URL=postgresql://beaver:password@host.docker.internal:5432/flaskr
       - REDISCLOUD_URL=redis://localhost
       - SECRET_KEY=devnotcompletelyrandomsecretkey
+      - TRANSFORMERS_CACHE=/cache/worker
+      - HF_HOME=/cache/worker
 
   worker:
     build:
-      context: .
+      context: ./celery_worker
       dockerfile: Dockerfile.celery
     environment:
       - DATABASE_URL=postgresql://beaver:password@host.docker.internal:5432/flaskr
@@ -26,52 +27,12 @@ services:
       - CELERY_BROKER_URL=redis://redis
       - CELERY_RESULT_BACKEND=redis://redis
       - CELERY_TASK_IGNORE_RESULT=true
+      - TRANSFORMERS_CACHE=/cache/worker
+      - HF_HOME=/cache/worker
     depends_on:
       - redis
-      - mlimage
-      # - db
 
   redis:
     image: redis
     ports:
       - "6379:6379"
-  
-  mlimage:
-    build:
-      context: .
-      dockerfile: Dockerfile.mldependencies
-
-
-  
-#   db:
-#     image: postgres
-#     restart: always
-#     user: postgres
-#     environment:
-#       - POSTGRES_DB=flaskr
-#       - POSTGRES_PASSWORD=devnotcompletelyrandomsecretkey
-#     expose:
-#       - 5432
-#     healthcheck:
-#       test: ["CMD", "pg_isready"]
-#       interval: 10s
-#       timeout: 5s
-#       retries: 5
-#     volumes:
-#       - db-data:/var/lib/postgresql/data
-  
-#   seed:
-#     build: ./db
-#     profiles: [seed]
-#     user: postgres
-#     environment:
-#       - POSTGRES_DB=flaskr
-#       - POSTGRES_PASSWORD=devnotcompletelyrandomsecretkey
-#       - POSTGRES_HOST=db
-#     restart: "no"
-#     depends_on:
-#       - server
-
-
-# volumes:
-#   db-data:

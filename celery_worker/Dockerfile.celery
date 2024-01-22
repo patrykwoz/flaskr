@@ -1,0 +1,29 @@
+# syntax=docker/dockerfile:1
+
+# Comments are provided throughout this file to help you get started.
+# If you need more help, visit the Dockerfile reference guide at
+# https://docs.docker.com/go/dockerfile-reference/
+
+ARG PYTHON_VERSION=3.10.12
+FROM python:${PYTHON_VERSION}-slim as workerbase
+
+# Prevents Python from writing pyc files.
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV C_FORCE_ROOT true
+ENV PYTHONUNBUFFERED=1
+
+WORKDIR /celery_worker
+
+COPY requirements_worker.txt /celery_worker/
+
+RUN --mount=type=cache,target=/root/.cache/pip \
+    --mount=type=bind,source=requirements_worker.txt,target=requirements_worker.txt \
+    python -m pip install -r requirements_worker.txt
+
+
+# Copy the source code into the container.
+COPY . .
+
+
+# Run the application.
+CMD ["celery", "-A", "celery_worker", "worker", "--loglevel=info"]
