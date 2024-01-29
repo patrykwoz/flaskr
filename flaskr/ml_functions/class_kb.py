@@ -4,7 +4,6 @@ import wikipedia
 import json
 import pdb
 import time
-from memory_profiler import memory_usage
 
 def extract_relations_from_model_output(text):
     relations = []
@@ -95,17 +94,7 @@ class KB():
         # check on wikipedia
         candidate_entities = [r["head"], r["tail"]]
 
-        start_time = time.time()
-        memory_before = memory_usage()[0]
-
         entities = [self.get_wikipedia_data(ent) for ent in candidate_entities]
-
-        end_time = time.time()
-        memory_after = memory_usage()[0]
-        print(f"Execution time: {end_time - start_time} seconds")
-        print(f"Memory used: {memory_after - memory_before} MiB")
-
-
 
         # if one entity does not exist, stop
         if any(ent is None for ent in entities):
@@ -159,8 +148,6 @@ class KB():
         }
         return json.dumps(kb_data, indent=4)
 
-
-
 def from_text_to_kb(text, article_url,tokenizer, model, span_length=128, article_title=None,
                     article_publish_date=None, verbose=False):
 
@@ -203,26 +190,14 @@ def from_text_to_kb(text, article_url,tokenizer, model, span_length=128, article
         "num_beams": 3,
         "num_return_sequences": num_return_sequences
     }
-    start_time = time.time()
-    memory_before = memory_usage()[0]
     generated_tokens = model.generate(
         **inputs,
         **gen_kwargs,
     )
-    end_time = time.time()
-    memory_after = memory_usage()[0]
-    print(f"Execution time: {end_time - start_time} seconds")
-    print(f"Memory used: {memory_after - memory_before} MiB")
 
     # decode relations
-    start_time = time.time()
-    memory_before = memory_usage()[0]
     decoded_preds = tokenizer.batch_decode(generated_tokens,
                                            skip_special_tokens=False)
-    end_time = time.time()
-    memory_after = memory_usage()[0]
-    print(f"Execution time: {end_time - start_time} seconds")
-    print(f"Memory used: {memory_after - memory_before} MiB")
 
     # create kb
     kb = KB()
@@ -240,7 +215,6 @@ def from_text_to_kb(text, article_url,tokenizer, model, span_length=128, article
         i += 1
 
     return kb
-
 
 def from_idea_to_kb(idea):
     config = {
